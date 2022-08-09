@@ -8,6 +8,12 @@ import { z } from "zod";
 const app = express();
 const port = 3000;
 
+const RedditMore = z.object({
+    kind: z.literal("more"),
+});
+
+type RedditMore = z.infer<typeof RedditMore>;
+
 const RedditT1 = z.object({
     kind: z.literal("t1"),
 });
@@ -30,7 +36,7 @@ type RedditT3 = z.infer<typeof RedditT3>;
 const RedditListing = z.object({
     kind: z.literal("Listing"),
     data: z.object({
-        children: z.array(z.discriminatedUnion("kind", [RedditT1, RedditT3]))
+        children: z.array(z.discriminatedUnion("kind", [RedditMore, RedditT1, RedditT3]))
     })
 });
 
@@ -159,6 +165,7 @@ app.get("/:para(*)", async (req, res) => {
         try {
             data = z.array(RedditListing).parse(await (await fetch(json)).json());
         } catch (e) {
+            console.log(e);
             res.status(400).send("bad url");
             return;
         }
