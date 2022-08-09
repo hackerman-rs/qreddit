@@ -134,13 +134,19 @@ app.get("/:id", async (req, res) => {
     let audioSet = sets.find(x => x.$.contentType == "audio");
     let videoSet = sets.find(x => x.$.contentType == "video");
 
-    if (!audioSet || !videoSet) {
+    if (!videoSet) {
         res.status(500).send("wtf");
         return;
     }
 
-    let bestAudio = bestRepr(audioSet.Representation);
     let bestVideo = bestRepr(videoSet.Representation);
+
+    if (!audioSet) {
+        res.redirect(`https://v.redd.it/${id}/${bestVideo}`);
+        return;
+    }
+
+    let bestAudio = bestRepr(audioSet.Representation);
 
     let timestamp = Date.now();
 
