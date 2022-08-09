@@ -106,8 +106,6 @@ function encode(id: string, video: string, audio: string, timestamp: number): Pr
 
 let idRegex = /https:\/\/v\.redd\.it\/(.*)\/DASHPlaylist\.mpd/;
 
-let urlMap: {[key: string]: string} = {};
-
 app.get("/:id", async (req, res) => {
     let id = req.params.id;
 
@@ -163,25 +161,19 @@ app.get("/:para(*)", async (req, res) => {
 
     let dashUrl: string;
 
-    if (urlMap[url]) {
-        dashUrl = urlMap[url];
+    let data: RedditListing[];
+    try {
+        data = z.array(RedditListing).parse(await (await fetch(json)).json());
+    } catch (e) {
+        console.log(e);
+        res.status(400).send("bad url");
+        return;
+    }
+    if (data[0].data.children[0].kind == "t3") {
+        dashUrl = data[0].data.children[0].data.secure_media.reddit_video.dash_url;
     } else {
-        console.log(json);
-        let data: RedditListing[];
-        try {
-            data = z.array(RedditListing).parse(await (await fetch(json)).json());
-        } catch (e) {
-            console.log(e);
-            res.status(400).send("bad url");
-            return;
-        }
-        if (data[0].data.children[0].kind == "t3") {
-            dashUrl = data[0].data.children[0].data.secure_media.reddit_video.dash_url;
-            urlMap[url] = dashUrl;
-        } else {
-            res.status(500).send("wtf");
-            return;
-        }
+        res.status(500).send("wtf");
+        return;
     }
 
     let id = dashUrl.match(idRegex)?.[1];
