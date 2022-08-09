@@ -90,7 +90,7 @@ function encode(id: string, video: string, audio: string, timestamp: number): Pr
             "-c:v",
             "copy",
             "-c:a",
-            "aac",
+            "copy",
             `/tmp/${id}_${timestamp}.mp4`,
         ]);
 
