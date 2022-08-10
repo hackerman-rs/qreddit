@@ -182,7 +182,7 @@ app.get("/:para(*)", async (req, res) => {
         return;
     }
 
-    res.redirect(`https://v.penple.dev/${id}`)
+    res.redirect(`https://qreddit.com/${id}`)
 })
 
 app.listen(port, () => {
