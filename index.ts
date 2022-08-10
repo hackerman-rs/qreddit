@@ -20,15 +20,25 @@ const RedditT1 = z.object({
 
 type RedditT1 = z.infer<typeof RedditT1>;
 
-const RedditT3 = z.object({
-    kind: z.literal("t3"),
-    data: z.object({
-        secure_media: z.object({
-            reddit_video: z.object({
-                dash_url: z.string(),
-            })
+const RegularPost = z.object({
+    secure_media: z.object({
+        reddit_video: z.object({
+            dash_url: z.string(),
         })
     })
+})
+
+type RegularPost = z.infer<typeof RegularPost>;
+
+const CrossPost = z.object({
+    crosspost_parent_list: z.array(RegularPost),
+})
+
+type CrossPost = z.infer<typeof CrossPost>;
+
+const RedditT3 = z.object({
+    kind: z.literal("t3"),
+    data: z.union([RegularPost, CrossPost])
 });
 
 type RedditT3 = z.infer<typeof RedditT3>;
@@ -170,7 +180,11 @@ app.get("/:para(*)", async (req, res) => {
         return;
     }
     if (data[0].data.children[0].kind == "t3") {
-        dashUrl = data[0].data.children[0].data.secure_media.reddit_video.dash_url;
+        if ('crosspost_parent_list' in data[0].data.children[0].data) {
+            dashUrl = data[0].data.children[0].data.crosspost_parent_list[0].secure_media.reddit_video.dash_url;
+        } else {
+            dashUrl = data[0].data.children[0].data.secure_media.reddit_video.dash_url;
+        }
     } else {
         res.status(500).send("wtf");
         return;
