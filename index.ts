@@ -1,9 +1,11 @@
 import express from "express";
-import fetch from "node-fetch";
+import fetch, {Headers} from "node-fetch";
 import {parseStringPromise} from "xml2js";
 import child_process from "child_process";
 import * as fs from "fs";
 import { z } from "zod";
+
+import config from "./config.json" assert { type: 'json' }
 
 const app = express();
 const port = 3000;
@@ -114,6 +116,15 @@ function encode(id: string, video: string, audio: string, timestamp: number): Pr
     });
 }
 
+async function httpGet(url: string) {
+    return fetch(url, {
+        method: "GET",
+        headers: new Headers({
+            "User-Agent": config.useragent
+        }),
+    })
+}
+
 let idRegex = /https:\/\/v\.redd\.it\/(.*)\/DASHPlaylist\.mpd/;
 
 app.get("/:id", async (req, res) => {
@@ -126,7 +137,7 @@ app.get("/:id", async (req, res) => {
 
     let dashUrl = `https://v.redd.it/${id}/DASHPlaylist.mpd`;
 
-    let dash = await (await fetch(dashUrl)).text();
+    let dash = await (await httpGet(dashUrl)).text();
 
     let dashData: DashPlaylist;
 
@@ -173,7 +184,7 @@ app.get("/:para(*)", async (req, res) => {
 
     let data: RedditListing[];
     try {
-        data = z.array(RedditListing).parse(await (await fetch(json)).json());
+        data = z.array(RedditListing).parse(await (await httpGet(json)).json());
     } catch (e) {
         console.log(e);
         res.status(400).send("bad url");
@@ -196,7 +207,7 @@ app.get("/:para(*)", async (req, res) => {
         return;
     }
 
-    res.redirect(`https://qreddit.com/${id}`)
+    res.redirect(`${config.host}/${id}`)
 })
 
 app.listen(port, () => {
